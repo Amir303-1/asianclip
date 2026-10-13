@@ -1,53 +1,161 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AsianClip Login</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-body{background:#080b09;color:white;font-family:Arial;text-align:center;padding:30px}
-.card{max-width:350px;margin:auto;background:#111713;padding:25px;border-radius:15px}
-h1{color:#39e66b}
-input,button{box-sizing:border-box;width:100%;padding:13px;margin:10px 0;border-radius:8px}
-input{background:#080b09;color:white;border:1px solid #39e66b}
-button{background:#39e66b;border:0;font-weight:bold}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AsianClip | Account</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 20px;
+      display: grid; place-items: center;
+      background: #080b09; color: white;
+      font-family: Arial, sans-serif;
+    }
+    .card {
+      width: 100%; max-width: 390px; padding: 26px;
+      background: #121813; border: 1px solid #2c4232;
+      border-radius: 18px;
+    }
+    h1 { text-align: center; }
+    h1 span { color: #35e879; }
+    p { color: #b5c1b8; text-align: center; }
+    input, button {
+      width: 100%; padding: 14px; margin-top: 14px;
+      border-radius: 9px; font-size: 16px;
+    }
+    input {
+      background: #080b09; color: white;
+      border: 1px solid #405044;
+    }
+    button {
+      background: #35e879; color: #071109;
+      border: 0; font-weight: bold; cursor: pointer;
+    }
+    button:disabled { opacity: .6; }
+    .switch {
+      color: #35e879; background: transparent;
+      border: 1px solid #35e879;
+    }
+    #message { overflow-wrap: anywhere; font-size: 14px; }
+  </style>
 </head>
 <body>
-<div class="card">
-<h1>AsianClip</h1>
-<p>Create your creator account</p>
-<form id="form">
-<input id="email" type="email" placeholder="Email" required>
-<input id="password" type="password" minlength="6" placeholder="Password" required>
-<button>Sign Up</button>
-</form>
-<button id="toggle">Already registered? Log in</button>
-<p id="msg"></p>
-</div>
-<script>
-const URL = "PASTE_PROJECT_URL_HERE";
-const KEY = const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TbkdT9kMRrHr4JezhB_9jQ_Yq0EBsDj";
-const db = supabase.createClient(URL, KEY);
-let login = false;
-document.getElementById("toggle").onclick = () => {
-login = !login;
-document.querySelector("form button").textContent = login ? "Log In" : "Sign Up";
-document.getElementById("toggle").textContent = login ? "Need an account? Sign up" : "Already registered? Log in";
-};
-document.getElementById("form").onsubmit = async e => {
-e.preventDefault();
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
-const result = login
-? await db.auth.signInWithPassword({email,password})
-: await db.auth.signUp({email,password});
-document.getElementById("msg").textContent =
-result.error ? result.error.message :
-login ? "Login successful!" : "Signup submitted! Check your email if confirmation is required.";
-};
-</script>
+  <main class="card">
+    <h1>Asian<span>Clip</span></h1>
+    <p id="subtitle">Create your account</p>
+
+    <form id="authForm">
+      <input id="email" type="email" placeholder="Email address"
+        autocomplete="email" required>
+      <input id="password" type="password"
+        placeholder="Password (minimum 6 characters)"
+        minlength="6" autocomplete="current-password" required>
+      <button id="submitBtn" type="submit">Create Account</button>
+    </form>
+
+    <button class="switch" id="switchBtn" type="button">
+      Already registered? Login
+    </button>
+    <p id="message" role="status"></p>
+  </main>
+
+  <script>
+    // Apna asli Project URL yahan paste karo
+    const SUPABASE_URL = "YOUR_PROJECT_URL";
+
+    // Apni pehle wali sb_publishable_ key yahan rakho
+    const SUPABASE_PUBLISHABLE_KEY =
+      "YOUR_PUBLISHABLE_KEY";
+
+    const form = document.getElementById("authForm");
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const submitBtn = document.getElementById("submitBtn");
+    const switchBtn = document.getElementById("switchBtn");
+    const subtitle = document.getElementById("subtitle");
+    const message = document.getElementById("message");
+
+    let isLogin = false;
+    let client = null;
+
+    try {
+      if (
+        SUPABASE_URL.startsWith("https://") &&
+        SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_")
+      ) {
+        client = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
+        );
+      }
+    } catch (e) {
+      message.textContent = "Connection setup failed. Check your details.";
+    }
+
+    switchBtn.addEventListener("click", function () {
+      isLogin = !isLogin;
+      subtitle.textContent = isLogin
+        ? "Welcome back"
+        : "Create your account";
+      submitBtn.textContent = isLogin
+        ? "Login"
+        : "Create Account";
+      switchBtn.textContent = isLogin
+        ? "New here? Create an account"
+        : "Already registered? Login";
+      password.autocomplete = isLogin
+        ? "current-password"
+        : "new-password";
+      message.textContent = "";
+    });
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      if (!client) {
+        message.textContent =
+          "Connection missing. Check your Project URL and Publishable Key.";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      message.textContent = "Please wait...";
+
+      try {
+        const credentials = {
+          email: email.value.trim(),
+          password: password.value
+        };
+
+        const result = isLogin
+          ? await client.auth.signInWithPassword(credentials)
+          : await client.auth.signUp(credentials);
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        if (isLogin) {
+          message.textContent =
+            "Login successful! You are signed in as " +
+            result.data.user.email + ".";
+        } else if (result.data.session) {
+          message.textContent =
+            "Account created successfully! You are signed in.";
+        } else {
+          message.textContent =
+            "Signup received! Check your email to confirm your account, then log in.";
+        }
+      } catch (error) {
+        message.textContent = "Error: " + error.message;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
