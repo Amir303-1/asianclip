@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AsianClip Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{background:#080b09;color:white;font-family:Arial;text-align:center;padding:30px}
+.card{max-width:350px;margin:auto;background:#111713;padding:25px;border-radius:15px}
+h1{color:#39e66b}
+input,button{box-sizing:border-box;width:100%;padding:13px;margin:10px 0;border-radius:8px}
+input{background:#080b09;color:white;border:1px solid #39e66b}
+button{background:#39e66b;border:0;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>AsianClip</h1>
+<p>Create your creator account</p>
+<form id="form">
+<input id="email" type="email" placeholder="Email" required>
+<input id="password" type="password" minlength="6" placeholder="Password" required>
+<button>Sign Up</button>
+</form>
+<button id="toggle">Already registered? Log in</button>
+<p id="msg"></p>
+</div>
+<script>
+const URL = "PASTE_PROJECT_URL_HERE";
+const KEY = "PASTE_PUBLISHABLE_KEY_HERE";
+const db = supabase.createClient(URL, KEY);
+let login = false;
+document.getElementById("toggle").onclick = () => {
+login = !login;
+document.querySelector("form button").textContent = login ? "Log In" : "Sign Up";
+document.getElementById("toggle").textContent = login ? "Need an account? Sign up" : "Already registered? Log in";
+};
+document.getElementById("form").onsubmit = async e => {
+e.preventDefault();
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+const result = login
+? await db.auth.signInWithPassword({email,password})
+: await db.auth.signUp({email,password});
+document.getElementById("msg").textContent =
+result.error ? result.error.message :
+login ? "Login successful!" : "Signup submitted! Check your email if confirmation is required.";
+};
+</script>
+</body>
+</html>
