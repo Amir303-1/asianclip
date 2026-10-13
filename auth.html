@@ -3,158 +3,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AsianClip | Account</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; padding: 20px;
-      display: grid; place-items: center;
-      background: #080b09; color: white;
-      font-family: Arial, sans-serif;
-    }
-    .card {
-      width: 100%; max-width: 390px; padding: 26px;
-      background: #121813; border: 1px solid #2c4232;
-      border-radius: 18px;
-    }
-    h1 { text-align: center; }
-    h1 span { color: #35e879; }
-    p { color: #b5c1b8; text-align: center; }
-    input, button {
-      width: 100%; padding: 14px; margin-top: 14px;
-      border-radius: 9px; font-size: 16px;
-    }
-    input {
-      background: #080b09; color: white;
-      border: 1px solid #405044;
-    }
-    button {
-      background: #35e879; color: #071109;
-      border: 0; font-weight: bold; cursor: pointer;
-    }
-    button:disabled { opacity: .6; }
-    .switch {
-      color: #35e879; background: transparent;
-      border: 1px solid #35e879;
-    }
-    #message { overflow-wrap: anywhere; font-size: 14px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AsianClip | Account</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#080b09;color:white;font-family:Arial,sans-serif}
+.card{width:100%;max-width:400px;padding:28px;background:#121813;border:1px solid #2c4232;border-radius:18px}
+h1{text-align:center;font-size:32px}
+h1 span{color:#35e879}
+p{text-align:center;color:#b5c1b8}
+input,button{width:100%;padding:14px;margin-top:14px;border-radius:9px;font-size:16px}
+input{background:#080b09;color:white;border:1px solid #405044}
+button{background:#35e879;color:#071109;border:0;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6}
+.switch{background:transparent;color:#35e879;border:1px solid #35e879}
+#message{overflow-wrap:anywhere;font-size:14px;line-height:1.5}
+</style>
 </head>
 <body>
-  <main class="card">
-    <h1>Asian<span>Clip</span></h1>
-    <p id="subtitle">Create your account</p>
-
-    <form id="authForm">
-      <input id="email" type="email" placeholder="Email address"
-        autocomplete="email" required>
-      <input id="password" type="password"
-        placeholder="Password (minimum 6 characters)"
-        minlength="6" autocomplete="current-password" required>
-      <button id="submitBtn" type="submit">Create Account</button>
-    </form>
-
-    <button class="switch" id="switchBtn" type="button">
-      Already registered? Login
-    </button>
-    <p id="message" role="status"></p>
-  </main>
-
-  <script>
-    
+<main class="card">
+<h1>Asian<span>Clip</span></h1>
+<p id="subtitle">Create your account</p>
+<form id="authForm">
+<input id="email" type="email" placeholder="Email address" autocomplete="email" required>
+<input id="password" type="password" placeholder="Password (minimum 6 characters)" minlength="6" autocomplete="current-password" required>
+<button id="submitBtn" type="submit">Create Account</button>
+</form>
+<button class="switch" id="switchBtn" type="button">Already registered? Login</button>
+<p id="message" role="status"></p>
+</main>
+<script>
 const SUPABASE_URL = "https://karoqzjkevxwrcajjdpk.supabase.co";
-
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TbkdT9kMRrHr4JezhB_9jQ_Yq0EBsDj";
 
+const client = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
-    const form = document.getElementById("authForm");
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-    const submitBtn = document.getElementById("submitBtn");
-    const switchBtn = document.getElementById("switchBtn");
-    const subtitle = document.getElementById("subtitle");
-    const message = document.getElementById("message");
+const form = document.getElementById("authForm");
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const submitBtn = document.getElementById("submitBtn");
+const switchBtn = document.getElementById("switchBtn");
+const subtitle = document.getElementById("subtitle");
+const message = document.getElementById("message");
+let isLogin = false;
 
-    let isLogin = false;
-    let client = null;
+switchBtn.addEventListener("click", function() {
+  isLogin = !isLogin;
+  subtitle.textContent = isLogin ? "Welcome back!" : "Create your account";
+  submitBtn.textContent = isLogin ? "Login" : "Create Account";
+  switchBtn.textContent = isLogin
+    ? "New here? Create an account"
+    : "Already registered? Login";
+  password.autocomplete = isLogin ? "current-password" : "new-password";
+  message.textContent = "";
+});
 
-    try {
-      if (
-        SUPABASE_URL.startsWith("https://") &&
-        SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_")
-      ) {
-        client = window.supabase.createClient(
-          SUPABASE_URL,
-          SUPABASE_PUBLISHABLE_KEY
-        );
-      }
-    } catch (e) {
-      message.textContent = "Connection setup failed. Check your details.";
+form.addEventListener("submit", async function(event) {
+  event.preventDefault();
+  submitBtn.disabled = true;
+  message.textContent = "Please wait...";
+
+  try {
+    const credentials = {
+      email: email.value.trim(),
+      password: password.value
+    };
+
+    const result = isLogin
+      ? await client.auth.signInWithPassword(credentials)
+      : await client.auth.signUp(credentials);
+
+    if (result.error) throw result.error;
+
+    if (isLogin) {
+      message.textContent = "Login successful!";
+    } else if (result.data.session) {
+      message.textContent = "Account created successfully!";
+    } else {
+      message.textContent = "Account created! Check your email to confirm it, then log in.";
     }
-
-    switchBtn.addEventListener("click", function () {
-      isLogin = !isLogin;
-      subtitle.textContent = isLogin
-        ? "Welcome back"
-        : "Create your account";
-      submitBtn.textContent = isLogin
-        ? "Login"
-        : "Create Account";
-      switchBtn.textContent = isLogin
-        ? "New here? Create an account"
-        : "Already registered? Login";
-      password.autocomplete = isLogin
-        ? "current-password"
-        : "new-password";
-      message.textContent = "";
-    });
-
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
-
-      if (!client) {
-        message.textContent =
-          "Connection missing. Check your Project URL and Publishable Key.";
-        return;
-      }
-
-      submitBtn.disabled = true;
-      message.textContent = "Please wait...";
-
-      try {
-        const credentials = {
-          email: email.value.trim(),
-          password: password.value
-        };
-
-        const result = isLogin
-          ? await client.auth.signInWithPassword(credentials)
-          : await client.auth.signUp(credentials);
-
-        if (result.error) {
-          throw result.error;
-        }
-
-        if (isLogin) {
-          message.textContent =
-            "Login successful! You are signed in as " +
-            result.data.user.email + ".";
-        } else if (result.data.session) {
-          message.textContent =
-            "Account created successfully! You are signed in.";
-        } else {
-          message.textContent =
-            "Signup received! Check your email to confirm your account, then log in.";
-        }
-      } catch (error) {
-        message.textContent = "Error: " + error.message;
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
-  </script>
+  } catch (error) {
+    message.textContent = "Error: " + error.message;
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+</script>
 </body>
 </html>
